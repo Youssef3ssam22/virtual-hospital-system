@@ -1,0 +1,57 @@
+"""Initial migration for patients models."""
+
+from django.db import migrations, models
+import django.db.models.deletion
+import uuid
+
+
+class Migration(migrations.Migration):
+
+    initial = True
+
+    dependencies = []
+
+    operations = [
+        migrations.CreateModel(
+            name='Patient',
+            fields=[
+                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ('mrn', models.CharField(db_index=True, max_length=32, unique=True)),
+                ('national_id', models.CharField(db_index=True, max_length=32, unique=True)),
+                ('full_name', models.CharField(max_length=255)),
+                ('date_of_birth', models.DateField()),
+                ('gender', models.CharField(choices=[('MALE', 'Male'), ('FEMALE', 'Female')], max_length=10)),
+                ('blood_type', models.CharField(blank=True, choices=[('A+', 'A+'), ('A-', 'A-'), ('B+', 'B+'), ('B-', 'B-'), ('AB+', 'AB+'), ('AB-', 'AB-'), ('O+', 'O+'), ('O-', 'O-')], max_length=3, null=True)),
+                ('phone', models.CharField(blank=True, max_length=20, null=True)),
+                ('known_allergies', models.JSONField(blank=True, default=list)),
+                ('is_active', models.BooleanField(default=True)),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+            ],
+            options={
+                'db_table': 'patients',
+                'ordering': ['-created_at'],
+            },
+        ),
+        migrations.CreateModel(
+            name='PatientAllergy',
+            fields=[
+                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ('allergy_code', models.CharField(db_index=True, max_length=50)),
+                ('allergy_name', models.CharField(max_length=255)),
+                ('severity', models.CharField(choices=[('MILD', 'Mild'), ('MODERATE', 'Moderate'), ('SEVERE', 'Severe')], default='MILD', max_length=12)),
+                ('recorded_by', models.CharField(max_length=100)),
+                ('recorded_at', models.DateTimeField(auto_now_add=True)),
+                ('is_active', models.BooleanField(default=True)),
+                ('patient', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='allergy_records', to='patients.patient')),
+            ],
+            options={
+                'db_table': 'patient_allergies',
+                'ordering': ['-recorded_at'],
+            },
+        ),
+        migrations.AddIndex(
+            model_name='patientallergy',
+            index=models.Index(fields=['patient', 'allergy_code'], name='patient_allergies_patient_allergy_idx'),
+        ),
+    ]

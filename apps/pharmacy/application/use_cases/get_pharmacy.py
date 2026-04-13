@@ -1,0 +1,1 @@
+﻿"""Get Pharmacy use case."""

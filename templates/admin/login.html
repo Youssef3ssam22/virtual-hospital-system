@@ -1,0 +1,69 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static jazzmin %}
+
+{% block bodyclass %}login-page vh-login-page{% endblock %}
+{% block nav-sidebar %}{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+{% block content_title %}{% endblock %}
+
+{% block content %}
+<div class="vh-login-shell">
+  <section class="vh-login-hero">
+    <span class="vh-login-hero__eyebrow">Medical Operations</span>
+    <h1>Virtual Hospital Command Center</h1>
+    <p>Secure access to administration, laboratory operations, and billing management.</p>
+    <div class="vh-login-points">
+      <div class="vh-login-point">
+        <strong>Administration</strong>
+        <span>Departments, wards, beds, system settings, and audit controls.</span>
+      </div>
+      <div class="vh-login-point">
+        <strong>Laboratory</strong>
+        <span>Catalog items, lab orders, specimens, results, and critical alerts.</span>
+      </div>
+      <div class="vh-login-point">
+        <strong>Billing</strong>
+        <span>Service catalogs, patient accounts, invoices, payments, and claims.</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="vh-login-card">
+    <div class="vh-login-card__header">
+      <span class="vh-login-card__eyebrow">Staff Sign In</span>
+      <h2>Access your dashboard</h2>
+      <p>Use your hospital staff account to continue.</p>
+    </div>
+
+    {% if form.errors and not form.non_field_errors %}
+    <div class="vh-login-alert vh-login-alert--error">
+      {% translate "Please enter the correct email and password for a staff account." %}
+    </div>
+    {% endif %}
+
+    {% if form.non_field_errors %}
+    <div class="vh-login-alert vh-login-alert--error">
+      {% for error in form.non_field_errors %}
+      <div>{{ error }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <form action="{{ app_path }}" method="post" id="login-form" class="vh-login-form">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="id_username">{% translate 'Email' %}</label>
+        <input type="email" name="username" id="id_username" class="form-control" autofocus required>
+      </div>
+      <div class="form-group">
+        <label for="id_password">{% translate 'Password' %}</label>
+        <input type="password" name="password" id="id_password" class="form-control" required>
+        <input type="hidden" name="next" value="{{ next }}">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block vh-login-submit">
+        {% translate 'Sign in to Command Center' %}
+      </button>
+    </form>
+  </section>
+</div>
+{% endblock %}

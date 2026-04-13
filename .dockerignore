@@ -1,0 +1,42 @@
+# Git
+.git/
+.gitignore
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+
+# Environment — NEVER copy real credentials into the image
+.env
+.env.local
+.env.production
+
+# Test output
+.coverage
+.pytest_cache/
+htmlcov/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Logs — not needed in image, mounted as volume at runtime
+logs/
+*.log
+
+# Collected static — rebuilt inside container by entrypoint.sh
+staticfiles/
+
+# Uploads — mounted as volume at runtime
+uploads/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker files themselves — no need to copy these into the image
+docker-compose*.yml
+nginx.conf

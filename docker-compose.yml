@@ -1,0 +1,148 @@
+services:
+
+  # ── PostgreSQL ─────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_DB:       ${DB_NAME:-virtual_hospital}
+      POSTGRES_USER:     ${DB_USER:-vh_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-123456}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test:     ["CMD-SHELL", "pg_isready -U ${DB_USER:-vh_user} -d ${DB_NAME:-virtual_hospital}"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+
+  # ── Redis ─────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    env_file: .env
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    networks:
+      - internal
+    healthcheck:
+      test:     ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+
+  # ── Neo4j ────────────────────────────────────────────────
+  neo4j:
+    image: neo4j:5-community
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: ${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-123456}
+      NEO4J_server_memory_heap_initial__size: 512m
+      NEO4J_server_memory_heap_max__size: 1G
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    networks:
+      - internal
+    healthcheck:
+      test:         ["CMD-SHELL", "wget -q --spider http://localhost:7474 || exit 1"]
+      interval:     20s
+      timeout:      10s
+      retries:      10
+      start_period: 60s
+
+  # ── Django ───────────────────────────────────────────────
+  web:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:    { condition: service_healthy }
+      redis: { condition: service_healthy }
+    env_file: .env
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - static_files:/app/staticfiles
+      - media_files:/app/uploads
+      - log_files:/app/logs
+    networks:
+      - internal
+    entrypoint: ["/app/entrypoint.sh"]
+    command: >
+      gunicorn config.wsgi:application
+        --bind 0.0.0.0:8000
+        --workers 4
+        --threads 2
+        --timeout 60
+        --access-logfile -
+        --error-logfile -
+    healthcheck:
+      test:         ["CMD-SHELL", "curl -sf http://localhost:8000/health/ || exit 1"]
+      interval:     30s
+      timeout:      10s
+      retries:      3
+      start_period: 60s
+
+  # ── Celery worker ────────────────────────────────────────
+  celery:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:    { condition: service_healthy }
+      redis: { condition: service_healthy }
+    env_file: .env
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+    volumes:
+      - log_files:/app/logs
+    networks:
+      - internal
+    command: >
+      celery -A config worker
+        -l info
+        -Q default,notifications,cdss
+        --concurrency 4
+
+  # ── Celery beat ──────────────────────────────────────────
+  celery-beat:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:    { condition: service_healthy }
+      redis: { condition: service_healthy }
+    env_file: .env
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+    volumes:
+      - log_files:/app/logs
+    networks:
+      - internal
+    command: >
+      celery -A config beat
+        -l info
+        --scheduler django_celery_beat.schedulers:DatabaseScheduler
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  neo4j_data:
+  neo4j_logs:
+  static_files:
+  media_files:
+  log_files:
+  ssl_certs:

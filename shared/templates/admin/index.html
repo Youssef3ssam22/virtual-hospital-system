@@ -1,0 +1,71 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{% block content %}
+<div class="vh-dashboard">
+  <section class="vh-hero">
+    <div class="vh-hero__content">
+      <span class="vh-hero__eyebrow">Control Center</span>
+      <h1>Run the hospital from one dashboard</h1>
+      <p>Manage operational structure, service catalogs, access control, and audit oversight with a cleaner hospital-focused layout.</p>
+      <div class="vh-hero__actions">
+        <a class="vh-chip" href="/admin/apps/admin/department/">Departments</a>
+        <a class="vh-chip" href="/admin/apps/admin/ward/">Wards</a>
+        <a class="vh-chip" href="/admin/apps/admin/bed/">Beds</a>
+        <a class="vh-chip" href="/admin/apps/admin/role/">Roles</a>
+      </div>
+    </div>
+    <div class="vh-hero__panel">
+      <div class="vh-kpi">
+        <span class="vh-kpi__label">Active modules</span>
+        <strong class="vh-kpi__value">{{ app_list|length }}</strong>
+      </div>
+      <div class="vh-kpi">
+        <span class="vh-kpi__label">Priority areas</span>
+        <strong class="vh-kpi__value">Admin, Lab, Billing</strong>
+      </div>
+      <div class="vh-kpi">
+        <span class="vh-kpi__label">Recommended flow</span>
+        <strong class="vh-kpi__value">Structure, access, services</strong>
+      </div>
+    </div>
+  </section>
+
+  {% if app_list %}
+  <section class="vh-app-grid">
+    {% for app in app_list %}
+    <article class="vh-app-card app-{{ app.app_label }}">
+      <header class="vh-app-card__header">
+        <div>
+          <span class="vh-app-card__eyebrow">Module</span>
+          <h2>{{ app.name }}</h2>
+        </div>
+        <span class="vh-app-card__count">{{ app.models|length }} items</span>
+      </header>
+      <div class="vh-model-list">
+        {% for model in app.models %}
+        <div class="vh-model-row">
+          <div class="vh-model-row__meta">
+            <span class="vh-model-row__name">{{ model.name }}</span>
+          </div>
+          <div class="vh-model-row__actions">
+            {% if model.add_url %}
+            <a href="{{ model.add_url }}" class="vh-action-link vh-action-link--add">{% translate 'Add' %}</a>
+            {% endif %}
+            {% if model.admin_url %}
+            <a href="{{ model.admin_url }}" class="vh-action-link vh-action-link--change">{% translate 'Change' %}</a>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </article>
+    {% endfor %}
+  </section>
+  {% else %}
+  <p>{% translate "You don’t have permission to view or edit anything." %}</p>
+  {% endif %}
+</div>
+{% endblock %}

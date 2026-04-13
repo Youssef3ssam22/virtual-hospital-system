@@ -1,0 +1,1 @@
+﻿"""Get Radiology use case."""

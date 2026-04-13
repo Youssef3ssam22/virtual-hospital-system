@@ -1,0 +1,57 @@
+"""Initial migration for lab models."""
+
+from django.db import migrations, models
+import django.db.models.deletion
+import uuid
+
+
+class Migration(migrations.Migration):
+
+    initial = True
+
+    dependencies = [
+        ('patients', '0001_initial'),
+    ]
+
+    operations = [
+        migrations.CreateModel(
+            name='LabOrder',
+            fields=[
+                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ('patient_id', models.UUIDField(db_index=True)),
+                ('encounter_id', models.UUIDField(db_index=True)),
+                ('test_codes', models.JSONField(default=list)),
+                ('ordered_by', models.CharField(max_length=255)),
+                ('status', models.CharField(choices=[('PENDING', 'Pending'), ('IN_PROGRESS', 'In Progress'), ('COMPLETED', 'Completed'), ('CANCELLED', 'Cancelled')], default='PENDING', max_length=20)),
+                ('priority', models.CharField(choices=[('ROUTINE', 'Routine'), ('URGENT', 'Urgent')], default='ROUTINE', max_length=10)),
+                ('notes', models.TextField(blank=True, null=True)),
+                ('is_active', models.BooleanField(default=True)),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+            ],
+            options={
+                'db_table': 'lab_orders',
+                'ordering': ['-created_at'],
+            },
+        ),
+        migrations.CreateModel(
+            name='LabResult',
+            fields=[
+                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ('test_code', models.CharField(db_index=True, max_length=50)),
+                ('test_name', models.CharField(max_length=255)),
+                ('result_value', models.TextField()),
+                ('unit', models.CharField(blank=True, max_length=50)),
+                ('reference_range', models.CharField(blank=True, max_length=100, null=True)),
+                ('abnormal', models.BooleanField(default=False)),
+                ('reported_by', models.CharField(max_length=255)),
+                ('reported_at', models.DateTimeField(auto_now_add=True)),
+                ('is_active', models.BooleanField(default=True)),
+                ('order', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='results', to='lab.laborder')),
+            ],
+            options={
+                'db_table': 'lab_results',
+                'ordering': ['-reported_at'],
+            },
+        ),
+    ]

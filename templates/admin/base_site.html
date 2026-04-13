@@ -1,0 +1,14 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block branding %}
+<div class="vh-branding">
+  <span class="vh-branding__eyebrow">Hospital Operations</span>
+  <h1 id="site-name" class="vh-branding__title">
+    <a href="{% url 'admin:index' %}">Virtual Hospital Command Center</a>
+  </h1>
+  <p class="vh-branding__subtitle">Administration, laboratory, billing, and clinical operations in one place.</p>
+</div>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
